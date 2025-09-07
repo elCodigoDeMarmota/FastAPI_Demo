@@ -1,0 +1,221 @@
+Data Base Name : GESTION
+
+USE [GESTION]
+GO
+/****** Object:  Table [dbo].[Agenda_Cirugia]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Agenda_Cirugia](
+	[Agenda_ID] [int] IDENTITY(1,1) NOT NULL,
+	[Pac_ID_Paciente] [int] NOT NULL,
+	[Ciru_ID_Cirugia] [int] NOT NULL,
+	[Agenda_Fecha] [date] NOT NULL,
+	[Agenda_Hora] [time](7) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Agenda_ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Ciru_Cirugia]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Ciru_Cirugia](
+	[Ciru_ID_Cirugia] [int] IDENTITY(1,1) NOT NULL,
+	[Ciru_Nombre] [varchar](100) NOT NULL,
+	[Ciru_Estado] [varchar](50) NULL,
+	[Ciru_Fecha_Programada] [date] NULL,
+	[Ciru_Indicaciones_PreQX] [varchar](max) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Ciru_ID_Cirugia] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Exa_Examenes]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Exa_Examenes](
+	[Exa_ID_Examen] [int] IDENTITY(1,1) NOT NULL,
+	[Exa_Nombre] [varchar](100) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Exa_ID_Examen] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[Pac_Paciente]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Pac_Paciente](
+	[Pac_ID_Paciente] [int] IDENTITY(1,1) NOT NULL,
+	[Pac_Rut] [varchar](15) NOT NULL,
+	[Pac_Nombre] [varchar](100) NOT NULL,
+	[Pac_Celular] [varchar](20) NULL,
+	[Pac_Correo] [varchar](100) NULL,
+	[Pac_FechaRegistro] [date] NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[Pac_ID_Paciente] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[Pac_Rut] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Pac_Paciente] ADD  DEFAULT (CONVERT([date],getdate())) FOR [Pac_FechaRegistro]
+GO
+ALTER TABLE [dbo].[Agenda_Cirugia]  WITH CHECK ADD  CONSTRAINT [FK_Agenda_Cirugia] FOREIGN KEY([Ciru_ID_Cirugia])
+REFERENCES [dbo].[Ciru_Cirugia] ([Ciru_ID_Cirugia])
+GO
+ALTER TABLE [dbo].[Agenda_Cirugia] CHECK CONSTRAINT [FK_Agenda_Cirugia]
+GO
+ALTER TABLE [dbo].[Agenda_Cirugia]  WITH CHECK ADD  CONSTRAINT [FK_Agenda_Paciente] FOREIGN KEY([Pac_ID_Paciente])
+REFERENCES [dbo].[Pac_Paciente] ([Pac_ID_Paciente])
+GO
+ALTER TABLE [dbo].[Agenda_Cirugia] CHECK CONSTRAINT [FK_Agenda_Paciente]
+GO
+/****** Object:  StoredProcedure [dbo].[ActualizarRegistro]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[ActualizarRegistro]
+    @ID INT,
+    @Rut VARCHAR(15),
+    @Nombre VARCHAR(100),
+    @Celular VARCHAR(20),
+    @Correo VARCHAR(100)
+AS
+BEGIN
+    UPDATE Pac_Paciente
+    SET 
+        Pac_Rut = @Rut,
+        Pac_Nombre = @Nombre,
+        Pac_Celular = @Celular,
+        Pac_Correo = @Correo
+    WHERE Pac_ID_Paciente = @ID;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[BuscarPorRUT]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[BuscarPorRUT]
+    @rut NVARCHAR(20)
+AS
+BEGIN
+    SELECT 
+        Pac_ID_Paciente,
+        Pac_Rut,
+        Pac_Nombre,
+        Pac_Celular,
+        Pac_Correo,
+        Pac_FechaRegistro   
+    FROM Pac_Paciente
+    WHERE Pac_Rut = @rut;
+END
+GO
+/****** Object:  StoredProcedure [dbo].[EliminarRegistro]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[EliminarRegistro]
+    @ID INT
+AS
+BEGIN
+    DELETE FROM Pac_Paciente
+    WHERE Pac_ID_Paciente = @ID;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[InsertarAgendaCirugia]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[InsertarAgendaCirugia]
+    @Pac_ID_Paciente INT,
+    @Ciru_ID_Cirugia INT,
+    @Agenda_Fecha DATE,
+    @Agenda_Hora TIME
+AS
+BEGIN
+    INSERT INTO Agenda_Cirugia (Pac_ID_Paciente, Ciru_ID_Cirugia, Agenda_Fecha, Agenda_Hora)
+    VALUES (@Pac_ID_Paciente, @Ciru_ID_Cirugia, @Agenda_Fecha, @Agenda_Hora);
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[InsertarRegistro]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE PROCEDURE [dbo].[InsertarRegistro]
+    @Rut VARCHAR(15),
+    @Nombre VARCHAR(100),
+    @Celular VARCHAR(20),
+    @Correo VARCHAR(100)
+AS
+BEGIN
+    INSERT INTO Pac_Paciente 
+    (
+        Pac_Rut,
+        Pac_Nombre,
+        Pac_Celular,
+        Pac_Correo,
+        Pac_FechaRegistro
+    )
+    VALUES 
+    (
+        @Rut,
+        @Nombre,
+        @Celular,
+        @Correo,
+        CAST(GETDATE() AS DATE)  -- Asigna la fecha actual
+    );
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[ListarCirugias]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[ListarCirugias]
+AS
+BEGIN
+    SELECT 
+        Ciru_ID_Cirugia,
+        Ciru_Nombre,
+        Ciru_Indicaciones_PreQX
+    FROM Ciru_Cirugia;
+END;
+GO
+/****** Object:  StoredProcedure [dbo].[ListarRegistros]    Script Date: 08-07-2025 17:02:30 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROCEDURE [dbo].[ListarRegistros]
+AS
+BEGIN
+    SELECT 
+        Pac_ID_Paciente,
+        Pac_Rut,
+        Pac_Nombre,
+        Pac_Celular,
+        Pac_Correo,
+        Pac_FechaRegistro
+    FROM Pac_Paciente;
+END;
+GO

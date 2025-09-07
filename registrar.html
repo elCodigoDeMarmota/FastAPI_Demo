@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registrar Paciente</title>
+  <link rel="stylesheet" href="/static/estilos.css" />
+</head>
+<body>
+  <div class="home-container">
+    <h1>Registrar Paciente</h1>
+    <form id="formPaciente" class="form">
+      <input type="text" id="rut" placeholder="RUT" required class="input" />
+      <input type="text" id="nombre" placeholder="Nombre completo" required class="input" />
+      <input type="text" id="celular" placeholder="Celular" class="input" />
+      <input type="email" id="correo" placeholder="Correo electrónico" class="input" />
+      <button type="submit" class="btn">Guardar</button>
+    </form>
+    <p id="respuesta" class="mensaje"></p>
+    <button onclick="window.location.href='home.html'" class="btn">Volver al Home</button>
+  </div>
+
+  <script>
+    document.getElementById("formPaciente").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const data = {
+        rut: document.getElementById("rut").value,
+        nombre: document.getElementById("nombre").value,
+        celular: document.getElementById("celular").value,
+        correo: document.getElementById("correo").value
+      };
+
+      try {
+        const response = await fetch("http://127.0.0.1:8000/pacientes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (response.ok) {
+          alert("Registro ingresado correctamente");
+          document.getElementById("formPaciente").reset();
+        } else {
+          const error = await response.text();
+          document.getElementById("respuesta").textContent =  'Error: ${error}';
+        }
+      } catch (error) {
+        document.getElementById("respuesta").textContent = "Error de conexión con la API";
+      }
+    });
+  </script>
+</body>
+</html>

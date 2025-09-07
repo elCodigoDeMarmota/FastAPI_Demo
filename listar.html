@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Listado de Pacientes</title>
+  <link rel="stylesheet" href="/static/estilos.css">
+</head>
+<body class="body">
+<div class="home-container home-container-wide">
+  <h1>Listado de Pacientes</h1>
+
+  <div class="table-container">
+    <table id="tablaPacientes" class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>RUT</th>
+          <th>Nombre</th>
+          <th>Celular</th>
+          <th>Correo</th>
+          <th>Fecha Registro</th>
+        </tr>
+      </thead>
+      <tbody id="contenidoTabla"></tbody>
+    </table>
+  </div>
+
+<div class="button-container">
+  <button type="button" onclick="location.href='home.html'" class="btn btn-small">Volver al Home</button>
+</div>
+</div>
+
+
+
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      try {
+        const resp = await fetch("/pacientes");
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const pacientes = await resp.json();
+
+        const contenidoTabla = document.getElementById("contenidoTabla");
+
+        if (pacientes.length === 0) {
+          const tr = document.createElement("tr");
+          const td = document.createElement("td");
+          td.colSpan = 6;
+          td.textContent = "No hay pacientes registrados.";
+          td.style.textAlign = "center";
+          tr.appendChild(td);
+          contenidoTabla.appendChild(tr);
+          return;
+        }
+
+        pacientes.forEach(paciente => {
+          const tr = document.createElement("tr");
+          [
+            paciente.id,
+            paciente.rut,
+            paciente.nombre,
+            paciente.celular || "-",
+            paciente.correo || "-",
+            paciente.fecha_registro
+          ].forEach(valor => {
+            const td = document.createElement("td");
+            td.textContent = valor;
+            tr.appendChild(td);
+          });
+
+          contenidoTabla.appendChild(tr);
+        });
+
+      } catch (err) {
+        console.error(err);
+        const msg = document.createElement("p");
+        msg.style.color = "red";
+        msg.textContent = "Error al cargar pacientes: " + err.message;
+        document.body.appendChild(msg);
+      }
+    });
+  </script>
+</body>
+</html>

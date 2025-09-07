@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscar Paciente</title>
+    <link rel="stylesheet" href="/static/estilos.css">
+</head>
+<body>
+    <div class="home-container">
+        <h1>Buscar Paciente</h1>
+        <input type="text" id="rut" class="input" placeholder="Ingrese RUT (ej: 12345678-9)">
+        <button onclick="buscarPaciente()" class="btn">Buscar</button>
+        <button onclick="window.location.href='home.html'" class="btn">Volver al Home</button>
+
+        <div id="mensaje" class="mensaje"></div>
+
+        <div id="datosPaciente" class="paciente-info" style="display: none;">
+            <p><strong>Nombre:</strong> <span id="nombre"></span></p>
+            <p><strong>Celular:</strong> <span id="celular"></span></p>
+            <p><strong>Correo:</strong> <span id="correo"></span></p>
+        
+            <div class="menu">
+                <button class="btn" onclick="mostrarPopup(pacienteActual.nombre, pacienteActual.celular, pacienteActual.correo)">Actualizar Datos</button>
+                <a id="btnEliminar" class="btn">Eliminar</a>
+                <a href="home.html" class="btn">Volver al Home</a>
+            </div>
+        </div>
+        
+    </div>
+    
+    <div id="popup" class="popup" style="display: none;">
+        <div class="popup-content">
+            <h2>Actualizar Datos</h2>
+            <input type="text" id="popup-nombre" class="input" placeholder="Nombre completo">
+            <input type="text" id="popup-celular" class="input" placeholder="Celular">
+            <input type="email" id="popup-correo" class="input" placeholder="Correo electrónico">
+
+            <button class="btn" onclick="guardarCambios()">Guardar Cambios</button>
+            <button class="btn cancel" onclick="cerrarPopup()">Cancelar</button>
+        </div>
+    </div>
+
+
+
+    <script>
+        function buscarPaciente() 
+        {
+            const rut = document.getElementById("rut").value.trim();
+            const mensaje = document.getElementById("mensaje");
+            const datos = document.getElementById("datosPaciente");
+
+            mensaje.textContent = "";
+            datos.style.display = "none";
+
+            if (!rut) {
+                mensaje.textContent = "Por favor, ingrese un RUT válido.";
+                return;
+            }
+
+            fetch(`/pacientes/buscar/${rut}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.mensaje) 
+                    {
+                        mensaje.textContent = "Paciente no encontrado.";
+                    } else 
+                    {
+                        document.getElementById("nombre").textContent = data.nombre;
+                        document.getElementById("celular").textContent = data.celular;
+                        document.getElementById("correo").textContent = data.correo;
+                        pacienteActual = data;
+                        datos.style.display = "block";
+                    }
+                })
+                .catch(error => 
+                {
+                    mensaje.textContent = "Error al buscar paciente.";
+                    console.error(error);
+                });
+        }
+
+        let pacienteActual = null;
+
+        function mostrarPopup(nombre, celular, correo) 
+        {
+            document.getElementById("popup-nombre").value = nombre;
+            document.getElementById("popup-celular").value = celular;
+            document.getElementById("popup-correo").value = correo;
+            document.getElementById("popup").style.display = "flex";
+        }
+
+
+        async function guardarCambios() 
+        {
+            const nombre = document.getElementById("popup-nombre").value;
+            const celular = document.getElementById("popup-celular").value;
+            const correo = document.getElementById("popup-correo").value;
+
+        try 
+        {
+            const response = await fetch(`/pacientes/${pacienteActual.id}`, 
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify
+                ({ 
+                    rut: pacienteActual.rut, 
+                    nombre, 
+                    celular, 
+                    correo 
+                })
+            });
+
+            if (response.ok) 
+            {
+                alert("Datos actualizados correctamente");
+                cerrarPopup();
+                buscarPaciente(); 
+            } 
+            else 
+            {
+                alert("Error al actualizar");
+            }
+            } 
+                catch (err) {
+                console.error(err);
+                alert("Error de conexión");
+            }
+        }
+        function cerrarPopup() 
+        {
+            document.getElementById("popup");
+            popup.style.display = "none";
+        }
+
+        document.getElementById("btnEliminar").addEventListener("click", async function () {
+        if (!pacienteActual || !pacienteActual.id) 
+        {
+            alert("No hay paciente seleccionado.");
+            return;
+        }
+
+        const confirmacion = confirm('¿Confirma que desea eliminar a ${pacienteActual.nombre}?');
+        if (!confirmacion) return;
+
+        try 
+        {
+            const response = await fetch(`/pacientes/${pacienteActual.id}`, 
+            {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                alert("Registro eliminado correctamente.");
+                document.getElementById("datosPaciente").style.display = "none";
+                document.getElementById("rut").value = "";
+                pacienteActual = null;
+            } 
+            else 
+            {
+                alert("No se pudo eliminar el paciente.");
+            }
+        } 
+            catch (err) 
+            {
+                console.error(err);
+                alert("Error al intentar eliminar.");
+            }
+});
+    </script>
+</body>
+</html>

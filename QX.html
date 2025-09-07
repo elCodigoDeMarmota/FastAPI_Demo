@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Agendar Cirugía</title>
+  <link rel="stylesheet" href="/static/estilos.css">
+</head>
+<body class="body">
+<div class="home-container">
+  <h1>Agendar Cirugía</h1>
+
+  <label for="rutBusqueda">RUT del Paciente</label>
+  <input type="text" id="rutBusqueda" placeholder="Ingrese RUT para buscar paciente" class="input">
+
+  <button onclick="buscarPaciente()" class="btn">Buscar Paciente</button>
+
+  <div id="datosPaciente" class="mensaje"></div>
+
+  <label for="cirugia">Seleccione Cirugía</label>
+  <select id="cirugia" class="input"></select>
+
+  <label for="fechaCirugia">Fecha de la Cirugía</label>
+  <input type="date" id="fechaCirugia" class="input">
+
+  <label for="horaCirugia">Hora de la Cirugía</label>
+  <input type="time" id="horaCirugia" class="input">
+
+  <label for="indicaciones">Indicaciones</label>
+  <textarea id="indicaciones" class="input" placeholder="Indicaciones" readonly></textarea>
+
+  <button onclick="guardarAgendamiento()" class="btn">Guardar Cirugía</button>
+  <button onclick="location.href='home.html'" class="btn cancel">Volver al Home</button>
+</div>
+
+
+  <script>
+    let pacienteActual = null;
+    let cirugiasDisponibles = [];
+
+    async function buscarPaciente() {
+      const rut = document.getElementById("rutBusqueda").value.trim();
+      if (!rut) return alert("Ingrese un RUT válido.");
+
+      try {
+        const resp = await fetch(`/pacientes/buscar/${rut}`);
+        const data = await resp.json();
+
+        if (data.mensaje) {
+          document.getElementById("datosPaciente").innerText = "Paciente no encontrado.";
+          pacienteActual = null;
+        } else {
+          pacienteActual = data;
+          document.getElementById("datosPaciente").innerText = `Nombre: ${data.nombre} | Teléfono: ${data.celular}`;
+        }
+      } catch {
+        alert("Error al buscar paciente.");
+      }
+    }
+
+    async function cargarCirugias() {
+      try {
+        const resp = await fetch("/cirugias");
+        cirugiasDisponibles = await resp.json();
+        const select = document.getElementById("cirugia");
+        select.innerHTML = `<option disabled selected>Seleccione Cirugía</option>`;
+
+        cirugiasDisponibles.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.nombre;
+          opt.setAttribute("data-indicaciones", c.indicaciones);
+          select.appendChild(opt);
+        });
+
+        select.addEventListener("change", () => {
+          const selected = select.options[select.selectedIndex];
+          document.getElementById("indicaciones").value = selected.getAttribute("data-indicaciones");
+        });
+
+      } catch {
+        alert("Error al cargar cirugías.");
+      }
+    }
+
+   async function guardarAgendamiento() {
+  const cirugiaId = document.getElementById("cirugia").value;
+  const fecha = document.getElementById("fechaCirugia").value;
+  const hora = document.getElementById("horaCirugia").value;
+
+  if (!pacienteActual || !cirugiaId || !fecha || !hora) {
+    alert("Complete todos los campos.");
+    return;
+  }
+
+  try {
+    const resp = await fetch("/agenda", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pac_id_paciente: pacienteActual.id,
+        ciru_id_cirugia: parseInt(cirugiaId),
+        agenda_fecha: fecha,
+        agenda_hora: hora
+      })
+    });
+
+    if (resp.ok) {
+      alert("Cirugía agendada correctamente.");
+      location.reload();
+    } else {
+      alert("Error al guardar.");
+    }
+  } catch {
+    alert("Error al conectar con el servidor.");
+  }
+}
+window.onload = cargarCirugias;
+
+</script>
+</body>
+</html>
